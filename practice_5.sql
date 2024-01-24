@@ -90,14 +90,66 @@ GROUP BY CASE
 		WHEN replacement_cost BETWEEN 20.00 AND 24.99 THEN 'MEDIUM'
 		WHEN replacement_cost BETWEEN 25.00 AND 29.99 THEN 'HIGH'
 	END
--- Câu hỏi 3:
-
--- Câu hỏi 4:
-
--- Câu hỏi 5:
-
+-- Câu hỏi 3: 
+SELECT 
+t1.title, t1.length, t3.name
+FROM film as t1
+inner join film_category as t2
+on t1.film_id = t2.film_id 
+inner join category as t3
+on t2.category_id = t3.category_id
+where t3.name in ('Drama', 'Sports')
+ORDER BY LENGTH DESC
+-- Câu hỏi 4: Đưa ra cái nhìn tổng quan về số lượng phim (tilte) trong mỗi danh mục (category).
+SELECT 
+count(t1.film_id), t3.name
+FROM film as t1
+inner join film_category as t2
+on t1.film_id = t2.film_id 
+inner join category as t3
+on t2.category_id = t3.category_id
+GROUP BY t3.name
+ORDER BY count(t1.film_id) DESC
+-- Câu hỏi 5: /* Đưa ra cái nhìn tổng quan về họ và tên của các diễn viên cũng như số lượng phim họ tham gia. */
+SELECT concat(t1.first_name,' ',t1.last_name) AS full_name, 
+count(t2.film_id)
+FROM actor as t1
+LEFT JOIN film_actor as t2
+ON t1.actor_id = t2.actor_id
+group by concat(t1.first_name,' ',t1.last_name)
+ORDER BY count(t2.film_id) DESC
 -- Câu hỏi 6:
-
+select t1.customer_id, t2.address
+FROM public.customer AS t1
+RIGHT JOIN address AS t2
+ON t1.address_id = t2.address_id
+WHERE t1.customer_id IS NULL
 -- Câu hỏi 7:
-
+/* Danh sách các thành phố và doanh thu tương ừng trên từng thành phố */
+SELECT 
+public.city.city,
+SUM(public.payment.AMOUNT)
+FROM public.payment 
+JOIN public.customer
+ON public.payment.customer_id = public.customer.customer_id
+JOIN public.address
+ON public.address.address_id = public.customer.address_id
+JOIN public.city
+ON public.address.city_id = public.city.city_id
+GROUP BY public.city.city
+ORDER BY SUM(public.payment.AMOUNT) DESC
 -- Câu hỏi 8:
+SELECT 
+concat(city, ', ', country),
+SUM(public.payment.AMOUNT)
+FROM public.payment 
+JOIN public.customer
+ON public.payment.customer_id = public.customer.customer_id
+JOIN public.address
+ON public.address.address_id = public.customer.address_id
+JOIN public.city
+ON public.address.city_id = public.city.city_id
+JOIN public.country
+ON public.country.country_id = public.city.country_id
+GROUP BY concat(city, ', ', country)
+ORDER BY SUM(public.payment.AMOUNT) ASC
