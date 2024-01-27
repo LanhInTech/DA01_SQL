@@ -34,16 +34,16 @@ FROM payment AS a
 
 -- Challenge: 
 SELECT 
-a.film_id,
-a.title,
-a.rating,
-(SELECT MAX(replacement_cost) FROM film AS b
- WHERE b.rating = a.rating
- GROUP BY a.rating) AS replacement_cost_max,
+film_id,
+title,
+rating,
  (SELECT AVG(replacement_cost) FROM film AS b
  WHERE b.rating = a.rating
  GROUP BY a.rating) AS avg_replacement_cost
 FROM film AS a
+WHERE a.replacement_cost = (SELECT MAX(replacement_cost) FROM film AS c
+ WHERE c.rating = a.rating
+ GROUP BY a.rating)
 ORDER BY rating
 
 
