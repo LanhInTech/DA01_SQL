@@ -31,14 +31,15 @@ ON A.PRODUCT = top_product.PRODUCT
 GROUP BY A.category, top_product.product, top_product.total_spend 
 ORDER BY category, TOTAL_SPEND DESC
 
-/* EX3: output: member_count
---input:  COUNT(case_id) GROUP BY policy_holder_id, COUNT(policy_holder_id)
---condition: COUNT(case_id) GROUP BY policy_holder_id >=3 */
-
-WITH call_case AS(
-SELECT policy_holder_id, COUNT(case_id) 
-FROM callers
-GROUP BY policy_holder_id
-HAVING COUNT(case_id)>=3)
-SELECT COUNT(policy_holder_id) AS member_count
-FROM call_case
+/* EX3: */
+  
+WITH page_count AS(
+SELECT page_id, COUNT(user_id) AS count_likes 
+FROM page_likes
+GROUP BY page_id
+ORDER BY page_id ASC) 
+SELECT pages.page_id
+FROM pages 
+LEFT JOIN page_count 
+  ON pages.page_id = page_count.page_id
+WHERE count_likes IS NULL
