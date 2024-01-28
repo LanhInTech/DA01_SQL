@@ -30,8 +30,20 @@ JOIN top_product
 ON A.PRODUCT = top_product.PRODUCT
 GROUP BY A.category, top_product.product, top_product.total_spend 
 ORDER BY category, TOTAL_SPEND DESC
+  
+/* EX3: --output: member_count
+--input:  COUNT(case_id) GROUP BY policy_holder_id, COUNT(policy_holder_id)
+--condition: COUNT(case_id) GROUP BY policy_holder_id >=3 */
 
-/* EX3: */
+WITH call_case AS(
+SELECT policy_holder_id, COUNT(case_id) 
+FROM callers
+GROUP BY policy_holder_id
+HAVING COUNT(case_id)>=3)
+SELECT COUNT(policy_holder_id) AS member_count
+FROM call_case
+  
+/* EX4: */
   
 WITH page_count AS(
 SELECT page_id, COUNT(user_id) AS count_likes 
@@ -43,3 +55,20 @@ FROM pages
 LEFT JOIN page_count 
   ON pages.page_id = page_count.page_id
 WHERE count_likes IS NULL
+
+/* EX5: */
+
+/* EX6: */
+(SELECT DATE_FORMAT(trans_date, '%Y-%m'),
+country,
+COUNT(id) AS transactions_count
+FROM Transactions 
+GROUP BY
+DATE_FORMAT(trans_date, '%Y-%m'), country)
+
+(SELECT DATE_FORMAT(trans_date, '%Y-%m'), country,
+COUNT(state) AS approved_count 
+FROM Transactions
+WHERE  state = 'approved'
+GROUP BY
+DATE_FORMAT(trans_date, '%Y-%m'), country)
