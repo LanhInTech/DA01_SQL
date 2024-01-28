@@ -57,18 +57,115 @@ LEFT JOIN page_count
 WHERE count_likes IS NULL
 
 /* EX5: */
-
+SELECT '7' AS month, 
+COUNT(DISTINCT user_7.user_id) AS monthly_active_users
+FROM
+(SELECT EXTRACT(MONTH FROM event_date) AS event_date, user_id
+FROM user_actions
+WHERE EXTRACT(MONTH FROM event_date) = '07'
+AND EXTRACT(YEAR FROM event_date) = '2022') AS user_7
+JOIN  
+(SELECT EXTRACT(MONTH FROM event_date) AS event_date, user_id
+FROM user_actions
+WHERE EXTRACT(MONTH FROM event_date) = '06'
+AND EXTRACT(YEAR FROM event_date) = '2022') AS user_6
+ON user_7.user_id = user_6.user_id
+  
 /* EX6: */
-(SELECT DATE_FORMAT(trans_date, '%Y-%m'),
+SELECT DATE_FORMAT(trans_date, '%Y-%m') AS month,
 country,
-COUNT(id) AS transactions_count
-FROM Transactions 
+COUNT(*) as  trans_count,
+SUM(CASE 
+WHEN state ='approved' 
+THEN 1 ELSE 0 
+END) as approved_count,
+SUM(amount) AS trans_total_amount,
+SUM(CASE 
+WHEN state ='approved'
+THEN amount 
+ELSE 0 END) AS approved_total_amount
+FROM 
+Transactions
 GROUP BY
-DATE_FORMAT(trans_date, '%Y-%m'), country)
+DATE_FORMAT(trans_date, '%Y-%m'), country
+/* EX7: */
+WITH cte_min_year AS 
+(SELECT product_id, MIN(year) AS first_year_cte
+FROM Sales
+GROUP BY product_id)
+SELECT A.product_id, A.year AS first_year, A.quantity, A.price
+FROM Sales AS A
+JOIN cte_min_year
+ON A.product_id = cte_min_year.product_id
+WHERE A.YEAR = cte_min_year.first_year_cte
+/* EX8: */
+SELECT customer_id FROM Customer
+GROUP BY customer_id
+HAVING COUNT(DISTINCT product_key) = 
+(SELECT COUNT(product_key) FROM Product)
+/* EX9: */
+SELECT 
+employee_id FROM Employees
+WHERE NOT manager_id IN
+(SELECT 
+emp.manager_id 
+FROM Employees AS emp
+JOIN Employees AS mng
+ON emp.manager_id = mng.employee_id)
+AND salary < 30000
+ORDER BY employee_id ASC
+/* EX10: */
+SELECT COUNT(DISTINCT company_id) AS duplicate_companies
+FROM job_listings
+WHERE company_id IN (
+SELECT company_id
+FROM Job_listings
+GROUP BY company_id, title, description
+HAVING COUNT(job_id) >= 2)
+/* EX11: */
+  
+# Write your MySQL query statement below
+(SELECT 
+Users.name AS results
+FROM (SELECT 
+user_id,
+COUNT(MovieRating.RATING) AS count_rating
+FROM MovieRating
+GROUP BY user_id 
+ORDER BY COUNT(MovieRating.RATING)) AS count_rate
+JOIN Users
+ON count_rate.user_id = Users.user_id
+ORDER BY count_rate.count_rating DESC, Users.name ASC
+LIMIT 1)
+UNION ALL
+(SELECT 
+Movies.title AS results
+FROM (SELECT 
+movie_id,
+AVG(MovieRating.RATING) AS avg_rating
+FROM MovieRating
+WHERE EXTRACT(MONTH FROM created_at) = '02' 
+AND EXTRACT(YEAR FROM created_at) = '2020'
+GROUP BY movie_id 
+ORDER BY AVG(MovieRating.RATING)) AS avg_rate
+JOIN Movies
+ON Movies.movie_id = avg_rate.movie_id
+ORDER BY avg_rate.avg_rating DESC, results ASC
+LIMIT 1)
 
-(SELECT DATE_FORMAT(trans_date, '%Y-%m'), country,
-COUNT(state) AS approved_count 
-FROM Transactions
-WHERE  state = 'approved'
-GROUP BY
-DATE_FORMAT(trans_date, '%Y-%m'), country)
+/* EX12: */
+SELECT
+distinct requester_id AS id,
+COUNT(requester_id) AS num
+FROM
+((SELECT 
+requester_id
+FROM RequestAccepted AS A)
+UNION ALL 
+(SELECT 
+accepter_id
+FROM RequestAccepted AS B)) AS union_table
+GROUP BY requester_id
+ORDER BY num DESC
+LIMIT 1
+
