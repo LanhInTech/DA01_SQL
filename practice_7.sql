@@ -71,7 +71,40 @@ ON A.user_id = cte_count.user_id
 WHERE cte_count.transaction_date = cte_first_value.first_transaction_date
 ORDER BY cte_first_value.first_transaction_date
 
-  
+--EX5:
+
+WITH cte_lag AS
+(SELECT *,
+LAG(tweet_count) OVER(PARTITION BY user_id ORDER BY tweet_date) AS lag_1,
+LAG(tweet_count, 2) OVER(PARTITION BY user_id ORDER BY tweet_date) AS lag_2
+FROM tweets)
+
+SELECT cte_lag.user_id, cte_lag.tweet_date,
+CASE 
+WHEN lag_1 IS NULL AND lag_2 IS NULL
+THEN 1.00*cte_lag.tweet_count
+WHEN lag_1 IS NOT NULL AND lag_2 IS NULL
+THEN ROUND(CAST((cte_lag.tweet_count + lag_1) AS DECIMAL)/2, 2)
+ELSE ROUND(CAST((cte_lag.tweet_count + lag_1 + lag_2) AS DECIMAL)/3, 2)
+END  rolling_avg_3d
+FROM cte_lag   
+    
+--EX6:
+    
+WITH cte_lead AS (SELECT *,
+EXTRACT(HOUR FROM transaction_timestamp) * 24 + EXTRACT(MINUTE FROM transaction_timestamp) AS minute_total,
+LEAD(EXTRACT(HOUR FROM transaction_timestamp) * 24 + EXTRACT(MINUTE FROM transaction_timestamp)) 
+OVER(PARTITION BY merchant_id, credit_card_id),
+LEAD(EXTRACT(HOUR FROM transaction_timestamp) * 24 + EXTRACT(MINUTE FROM transaction_timestamp)) 
+OVER(PARTITION BY merchant_id, credit_card_id) - 
+EXTRACT(HOUR FROM transaction_timestamp) * 24 + EXTRACT(MINUTE FROM transaction_timestamp) AS difference_time
+FROM transactions)
+
+SELECT
+COUNT(transaction_id) AS payment_count
+FROM cte_lead
+WHERE difference_time <=10
+    
 --EX7:
   
   -- CÁCH 1:
